@@ -162,12 +162,20 @@ function removeNode(nodeId) {
 function quoteTerm(keyword) {
   const trimmed = keyword.trim();
   if (!trimmed) return '""';
-  if (/\s/.test(trimmed)) return `"${trimmed.replaceAll('"', '\\"')}"`;
+  if (/\s/.test(trimmed)) return `"${trimmed.replaceAll('"', '""')}"`;
   return trimmed;
 }
 
+function isAdvancedExpression(keyword) {
+  const trimmed = keyword.trim();
+  if (!trimmed) return false;
+
+  // すでに利用者が演算子・括弧を含めている場合は、入力をそのまま使う。
+  return /\(|\)|\bAND\b|\bOR\b|\bNOT\b|＋|＊|！/i.test(trimmed);
+}
+
 function formatCondition(node) {
-  const term = quoteTerm(node.keyword);
+  const term = isAdvancedExpression(node.keyword) ? node.keyword.trim() : quoteTerm(node.keyword);
   if (currentTarget === 'jplatpat') {
     const compositeFields = {
       TI_AB_CL: ['TI', 'AB', 'CL'],
