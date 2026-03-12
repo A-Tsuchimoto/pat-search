@@ -21,10 +21,16 @@
         </div>
 
         <div class="action-row">
+          <button id="load-sample" type="button">推奨サンプルを読み込む</button>
           <button id="add-condition" type="button">条件を追加</button>
           <button id="add-group" type="button">グループを追加</button>
           <button id="reset-query" type="button" class="danger">リセット</button>
         </div>
+      </section>
+
+      <section class="panel">
+        <h2 id="guide-title">検索設計ガイド</h2>
+        <ul id="guide-list" class="guide-list"></ul>
       </section>
 
       <section class="panel">
@@ -67,10 +73,10 @@
             <select class="field-select"></select>
           </label>
           <label>キーワード
-            <input class="keyword-input" type="text" placeholder="例: battery" />
+            <input class="keyword-input" type="text" />
           </label>
           <label class="checkbox-label">
-            <input class="negate-input" type="checkbox" /> 除外 (NOT)
+            <input class="negate-input" type="checkbox" /> <span class="negate-label-text">除外</span>
           </label>
         </div>
       </div>

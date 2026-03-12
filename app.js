@@ -1,19 +1,100 @@
-const FIELD_OPTIONS = {
-  jplatpat: [
-    { value: 'TX', label: '全文対象 (TX)' },
-    { value: 'TI', label: '発明の名称 (TI)' },
-    { value: 'AB', label: '要約 (AB)' },
-    { value: 'CL', label: '請求項 (CL)' },
-    { value: 'AP', label: '出願人 (AP)' },
-    { value: 'IP', label: 'IPC分類 (IP)' },
-  ],
-  lens: [
-    { value: 'title', label: 'Title (title)' },
-    { value: 'abstract', label: 'Abstract (abstract)' },
-    { value: 'claim', label: 'Claim (claim)' },
-    { value: 'full_text', label: 'Full text (full_text)' },
-    { value: 'cpc', label: 'CPC (cpc)' },
-  ],
+const TARGET_CONFIG = {
+  jplatpat: {
+    name: 'J-PlatPat',
+    fields: [
+      { value: 'TX', label: '全文 (TX)' },
+      { value: 'TI', label: '発明の名称 (TI)' },
+      { value: 'AB', label: '要約・抄録 (AB)' },
+      { value: 'CL', label: '請求の範囲 (CL)' },
+      { value: 'FI', label: 'FI分類 (FI)' },
+      { value: 'FT', label: 'Fターム (FT)' },
+      { value: 'IPC', label: 'IPC分類 (IPC)' },
+      { value: 'AP', label: '出願人 (AP)' },
+      { value: 'PN', label: '番号系項目 (PN)' },
+    ],
+    keywordPlaceholder: '例: 無電源,3N,発光',
+    negateLabel: '除外（-）',
+    guide: [
+      '演算子は *（AND） / +（OR） / -（NOT）を使用。',
+      'グルーピングは [ ] を意識し、観点ごとに分ける。',
+      '同義語は [A+B+C]、技術観点同士は * で連結。',
+      '広く拾うならTX、精密化はAB/CL/FI/FT/IPCを併用。',
+    ],
+    sample: {
+      operator: 'AND',
+      children: [
+        {
+          type: 'group',
+          operator: 'OR',
+          children: [
+            { type: 'condition', field: 'AB', keyword: '電池', negate: false },
+            { type: 'condition', field: 'AB', keyword: '蓄電', negate: false },
+            { type: 'condition', field: 'AB', keyword: '二次電池', negate: false },
+          ],
+        },
+        {
+          type: 'group',
+          operator: 'OR',
+          children: [
+            { type: 'condition', field: 'CL', keyword: '冷却', negate: false },
+            { type: 'condition', field: 'CL', keyword: '放熱', negate: false },
+          ],
+        },
+        {
+          type: 'group',
+          operator: 'OR',
+          children: [
+            { type: 'condition', field: 'FI', keyword: 'H01M', negate: false },
+            { type: 'condition', field: 'IPC', keyword: 'H01M', negate: false },
+          ],
+        },
+      ],
+    },
+  },
+  lens: {
+    name: 'Lens.org',
+    fields: [
+      { value: 'title', label: 'Title (title)' },
+      { value: 'abstract', label: 'Abstract (abstract)' },
+      { value: 'claim', label: 'Claim (claim)' },
+      { value: 'full_text', label: 'Full text (full_text)' },
+      { value: 'applicant.name', label: 'Applicant (applicant.name)' },
+      { value: 'inventor.name', label: 'Inventor (inventor.name)' },
+      { value: 'cpc.symbol', label: 'CPC (cpc.symbol)' },
+      { value: 'ipc.symbol', label: 'IPC (ipc.symbol)' },
+      { value: 'publication_date', label: 'Publication date (publication_date)' },
+    ],
+    keywordPlaceholder: '例: "solid electrolyte" OR battery~2',
+    negateLabel: '除外（NOT）',
+    guide: [
+      '演算子は AND / OR / NOT（大文字）を使用。',
+      'field:value 形式で記述し、グルーピングは ( )。',
+      'フレーズは "..."、近接は "語1 語2"~k、範囲は [a TO b]。',
+      '既定ANDなので、複雑式は必ず括弧で意図を明示する。',
+    ],
+    sample: {
+      operator: 'AND',
+      children: [
+        {
+          type: 'group',
+          operator: 'OR',
+          children: [
+            { type: 'condition', field: 'title', keyword: 'battery', negate: false },
+            { type: 'condition', field: 'abstract', keyword: '"solid electrolyte"', negate: false },
+          ],
+        },
+        {
+          type: 'group',
+          operator: 'OR',
+          children: [
+            { type: 'condition', field: 'claim', keyword: 'cooling', negate: false },
+            { type: 'condition', field: 'claim', keyword: 'heat dissipation', negate: false },
+          ],
+        },
+        { type: 'condition', field: 'cpc.symbol', keyword: 'H01M*', negate: false },
+      ],
+    },
+  },
 };
 
 let nodeCounter = 1;
@@ -35,19 +116,23 @@ const createCondition = (field, keyword = '', negate = false) => ({
 });
 
 const rootNode = createGroup('AND');
-rootNode.children.push(createCondition(FIELD_OPTIONS.jplatpat[0].value, 'battery', false));
-rootNode.children.push(createCondition(FIELD_OPTIONS.jplatpat[1].value, 'electrolyte', false));
 
 const builderRoot = document.getElementById('builder-root');
 const outputEl = document.getElementById('query-output');
 const csvPreviewEl = document.getElementById('csv-preview');
 const copyStatusEl = document.getElementById('copy-status');
+const guideTitleEl = document.getElementById('guide-title');
+const guideListEl = document.getElementById('guide-list');
 
 const groupTemplate = document.getElementById('group-template');
 const conditionTemplate = document.getElementById('condition-template');
 
+function getTargetConfig() {
+  return TARGET_CONFIG[currentTarget];
+}
+
 function getFieldsForCurrentTarget() {
-  return FIELD_OPTIONS[currentTarget];
+  return getTargetConfig().fields;
 }
 
 function ensureFieldCompatibility(conditionNode) {
@@ -68,7 +153,14 @@ function findNodeAndParent(targetId, node = rootNode, parent = null) {
   return null;
 }
 
+function renderGuide() {
+  const config = getTargetConfig();
+  guideTitleEl.textContent = `${config.name}向け検索設計ガイド`;
+  guideListEl.innerHTML = config.guide.map((point) => `<li>${point}</li>`).join('');
+}
+
 function render() {
+  renderGuide();
   builderRoot.innerHTML = '';
   builderRoot.appendChild(renderNode(rootNode, true));
   outputEl.value = buildQuery(rootNode);
@@ -117,6 +209,7 @@ function renderNode(node, isRoot = false) {
   const fieldSelect = el.querySelector('.field-select');
   const keywordInput = el.querySelector('.keyword-input');
   const negateInput = el.querySelector('.negate-input');
+  const negateLabelText = el.querySelector('.negate-label-text');
 
   el.dataset.nodeId = node.id;
   fieldSelect.innerHTML = getFieldsForCurrentTarget()
@@ -125,7 +218,9 @@ function renderNode(node, isRoot = false) {
 
   fieldSelect.value = node.field;
   keywordInput.value = node.keyword;
+  keywordInput.placeholder = getTargetConfig().keywordPlaceholder;
   negateInput.checked = node.negate;
+  negateLabelText.textContent = getTargetConfig().negateLabel;
 
   fieldSelect.addEventListener('change', (e) => {
     node.field = e.target.value;
@@ -155,26 +250,22 @@ function removeNode(nodeId) {
   render();
 }
 
+function isAdvancedExpression(keyword) {
+  const trimmed = keyword.trim();
+  if (!trimmed) return false;
+  return /\(|\)|\[|\]|\bAND\b|\bOR\b|\bNOT\b|\+|\*|\-|~|\bTO\b|:|,\d{1,2}[CN],/i.test(trimmed);
+}
+
 function quoteTerm(keyword) {
   const trimmed = keyword.trim();
   if (!trimmed) return '';
-  if (/[[\]/*+!]/.test(trimmed)) {
-    return trimmed.replace(/[\[\]]/g, '');
-  }
+  if (isAdvancedExpression(trimmed)) return trimmed;
   if (/\s/.test(trimmed)) return `"${trimmed.replaceAll('"', '""')}"`;
   return trimmed;
 }
 
-function isAdvancedExpression(keyword) {
-  const trimmed = keyword.trim();
-  if (!trimmed) return false;
-
-  // すでに利用者が演算子・括弧を含めている場合は、入力をそのまま使う。
-  return /\(|\)|\bAND\b|\bOR\b|\bNOT\b|＋|＊|！/i.test(trimmed);
-}
-
 function formatCondition(node) {
-  const term = isAdvancedExpression(node.keyword) ? node.keyword.trim() : quoteTerm(node.keyword);
+  const term = quoteTerm(node.keyword);
   if (!term) return '';
 
   if (currentTarget === 'jplatpat') {
@@ -190,8 +281,8 @@ function buildQuery(node, options = {}) {
     const base = formatCondition(node);
     if (!base) return '';
     if (!node.negate) return base;
-    if (currentTarget === 'jplatpat') return `![${base.slice(1)}`;
-    return `NOT (${base})`;
+    if (currentTarget === 'jplatpat') return `-${base}`;
+    return `NOT ${base}`;
   }
 
   if (!node.children.length) return '';
@@ -199,15 +290,21 @@ function buildQuery(node, options = {}) {
     .map((child) => buildQuery(child, { isRoot: false }))
     .filter(Boolean);
   if (!builtChildren.length) return '';
-  if (builtChildren.length === 1) return builtChildren[0];
+  if (builtChildren.length === 1) {
+    const only = builtChildren[0];
+    if (currentTarget === 'jplatpat' && !isRoot && !only.startsWith('[') && !only.startsWith('-')) {
+      return `[${only}]`;
+    }
+    return only;
+  }
 
   const jplatpatOperator = node.operator === 'OR' ? '+' : '*';
   const joined = currentTarget === 'jplatpat'
     ? builtChildren.join(jplatpatOperator)
     : builtChildren.join(` ${node.operator} `);
 
-  if (currentTarget === 'jplatpat' && isRoot) {
-    return joined;
+  if (currentTarget === 'jplatpat') {
+    return isRoot ? joined : `[${joined}]`;
   }
   return `(${joined})`;
 }
@@ -339,6 +436,25 @@ function triggerDownload(filename, text) {
   URL.revokeObjectURL(url);
 }
 
+function buildNodeFromTemplate(templateNode) {
+  if (templateNode.type === 'condition') {
+    return createCondition(templateNode.field, templateNode.keyword, templateNode.negate);
+  }
+
+  const group = createGroup(templateNode.operator || 'AND');
+  for (const child of templateNode.children || []) {
+    group.children.push(buildNodeFromTemplate(child));
+  }
+  return group;
+}
+
+function loadSampleForCurrentTarget() {
+  const sampleRoot = buildNodeFromTemplate({ type: 'group', ...getTargetConfig().sample });
+  rootNode.operator = sampleRoot.operator;
+  rootNode.children = sampleRoot.children;
+  render();
+}
+
 function bindEvents() {
   document.querySelectorAll('.target-button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -346,6 +462,10 @@ function bindEvents() {
       document.querySelectorAll('.target-button').forEach((b) => b.classList.toggle('active', b === btn));
       render();
     });
+  });
+
+  document.getElementById('load-sample').addEventListener('click', () => {
+    loadSampleForCurrentTarget();
   });
 
   document.getElementById('add-condition').addEventListener('click', () => {
@@ -398,4 +518,4 @@ function bindEvents() {
 }
 
 bindEvents();
-render();
+loadSampleForCurrentTarget();
