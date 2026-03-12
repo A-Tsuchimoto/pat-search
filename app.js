@@ -5,6 +5,11 @@ const FIELD_OPTIONS = {
     { value: 'CL', label: '請求項 (CL)' },
     { value: 'FT', label: '全文 (FT)' },
     { value: 'IPC', label: 'IPC分類 (IPC)' },
+    { value: 'TI_AB_CL', label: '要約+請求項+発明の名称 (TI+AB+CL)' },
+    { value: 'TI_AB', label: '発明の名称+要約 (TI+AB)' },
+    { value: 'AB_CL', label: '要約+請求項 (AB+CL)' },
+    { value: 'CL_FT', label: '請求項+全文 (CL+FT)' },
+    { value: 'TI_CL', label: '発明の名称+請求項 (TI+CL)' },
   ],
   lens: [
     { value: 'title', label: 'Title (title)' },
@@ -164,7 +169,20 @@ function quoteTerm(keyword) {
 function formatCondition(node) {
   const term = quoteTerm(node.keyword);
   if (currentTarget === 'jplatpat') {
-    return `${node.field}=(${term})`;
+    const compositeFields = {
+      TI_AB_CL: ['TI', 'AB', 'CL'],
+      TI_AB: ['TI', 'AB'],
+      AB_CL: ['AB', 'CL'],
+      CL_FT: ['CL', 'FT'],
+      TI_CL: ['TI', 'CL'],
+    };
+
+    if (compositeFields[node.field]) {
+      const expanded = compositeFields[node.field].map((field) => `${field}=${term}`);
+      return `(${expanded.join(' OR ')})`;
+    }
+
+    return `${node.field}=${term}`;
   }
   return `${node.field}:${term}`;
 }
