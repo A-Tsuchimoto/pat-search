@@ -3,12 +3,13 @@ const TARGET_CONFIG = {
     name: 'J-PlatPat',
     fields: [
       { value: 'TX', label: '全文 (TX)' },
-      { value: 'TI', label: '発明の名称 (TI)' },
+      { value: 'TL', label: '発明の名称 (TL)' },
+      { value: 'AB_CL_TL', label: '要約+請求項+発明の名称 (AB+CL+TL)' },
       { value: 'AB', label: '要約・抄録 (AB)' },
       { value: 'CL', label: '請求の範囲 (CL)' },
       { value: 'FI', label: 'FI分類 (FI)' },
       { value: 'FT', label: 'Fターム (FT)' },
-      { value: 'IPC', label: 'IPC分類 (IPC)' },
+      { value: 'IP', label: 'IPC分類 (IP)' },
       { value: 'AP', label: '出願人 (AP)' },
       { value: 'PN', label: '番号系項目 (PN)' },
     ],
@@ -18,7 +19,7 @@ const TARGET_CONFIG = {
       '演算子は *（AND） / +（OR） / -（NOT）を使用。',
       'グルーピングは [ ] を意識し、観点ごとに分ける。',
       '同義語は [A+B+C]、技術観点同士は * で連結。',
-      '広く拾うならTX、精密化はAB/CL/FI/FT/IPCを併用。',
+      '広く拾うならTX、精密化はAB/CL/TL/FI/FT/IPを併用。',
     ],
     sample: {
       operator: 'AND',
@@ -45,7 +46,7 @@ const TARGET_CONFIG = {
           operator: 'OR',
           children: [
             { type: 'condition', field: 'FI', keyword: 'H01M', negate: false },
-            { type: 'condition', field: 'IPC', keyword: 'H01M', negate: false },
+            { type: 'condition', field: 'IP', keyword: 'H01M', negate: false },
           ],
         },
       ],
@@ -269,6 +270,9 @@ function formatCondition(node) {
   if (!term) return '';
 
   if (currentTarget === 'jplatpat') {
+    if (node.field === 'AB_CL_TL') {
+      return [`${term}/AB`, `${term}/CL`, `${term}/TL`].join('+');
+    }
     return `[${term}/${node.field}]`;
   }
   return `${node.field}:${term}`;
