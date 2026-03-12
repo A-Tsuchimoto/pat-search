@@ -1,0 +1,152 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --text: #1f2933;
+  --primary: #1f7aec;
+  --danger: #d64545;
+  --border: #d8e1ea;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 1.5rem;
+  background: #16324f;
+  color: #fff;
+}
+
+header h1 { margin: 0 0 0.5rem; }
+header p { margin: 0; }
+
+main {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  padding: 0 1rem 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+}
+
+.action-row {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+button,
+.file-upload {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+button:hover,
+.file-upload:hover { border-color: var(--primary); }
+
+button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+button.danger {
+  color: #fff;
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+button.small { padding: 0.25rem 0.5rem; }
+
+.file-upload input { display: none; }
+
+.node {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem;
+  margin-top: 0.6rem;
+  background: #fcfdff;
+}
+
+.group-node { border-left: 4px solid #78a8e8; }
+.condition-node { border-left: 4px solid #8ac37b; }
+
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.node-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.children {
+  margin-left: 1rem;
+  border-left: 1px dashed var(--border);
+  padding-left: 0.8rem;
+}
+
+.condition-grid {
+  margin-top: 0.5rem;
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.92rem;
+}
+
+.checkbox-label {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 1.2rem;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem;
+  background: #fdfefe;
+}
+
+.hint {
+  color: #5c6773;
+  margin: 0.2rem 0 0.8rem;
+}
+
+#copy-status { color: #1f7a1f; }
