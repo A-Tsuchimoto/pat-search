@@ -1,15 +1,11 @@
 const FIELD_OPTIONS = {
   jplatpat: [
+    { value: 'TX', label: '全文対象 (TX)' },
     { value: 'TI', label: '発明の名称 (TI)' },
     { value: 'AB', label: '要約 (AB)' },
     { value: 'CL', label: '請求項 (CL)' },
-    { value: 'FT', label: '全文 (FT)' },
-    { value: 'IPC', label: 'IPC分類 (IPC)' },
-    { value: 'TI_AB_CL', label: '要約+請求項+発明の名称 (TI+AB+CL)' },
-    { value: 'TI_AB', label: '発明の名称+要約 (TI+AB)' },
-    { value: 'AB_CL', label: '要約+請求項 (AB+CL)' },
-    { value: 'CL_FT', label: '請求項+全文 (CL+FT)' },
-    { value: 'TI_CL', label: '発明の名称+請求項 (TI+CL)' },
+    { value: 'AP', label: '出願人 (AP)' },
+    { value: 'IP', label: 'IPC分類 (IP)' },
   ],
   lens: [
     { value: 'title', label: 'Title (title)' },
@@ -161,7 +157,10 @@ function removeNode(nodeId) {
 
 function quoteTerm(keyword) {
   const trimmed = keyword.trim();
-  if (!trimmed) return '""';
+  if (!trimmed) return '';
+  if (/[[\]/*+!]/.test(trimmed)) {
+    return trimmed.replace(/[\[\]]/g, '');
+  }
   if (/\s/.test(trimmed)) return `"${trimmed.replaceAll('"', '""')}"`;
   return trimmed;
 }
@@ -176,21 +175,10 @@ function isAdvancedExpression(keyword) {
 
 function formatCondition(node) {
   const term = isAdvancedExpression(node.keyword) ? node.keyword.trim() : quoteTerm(node.keyword);
+  if (!term) return '';
+
   if (currentTarget === 'jplatpat') {
-    const compositeFields = {
-      TI_AB_CL: ['TI', 'AB', 'CL'],
-      TI_AB: ['TI', 'AB'],
-      AB_CL: ['AB', 'CL'],
-      CL_FT: ['CL', 'FT'],
-      TI_CL: ['TI', 'CL'],
-    };
-
-    if (compositeFields[node.field]) {
-      const expanded = compositeFields[node.field].map((field) => `${field}=${term}`);
-      return `(${expanded.join(' OR ')})`;
-    }
-
-    return `${node.field}=${term}`;
+    return `[${term}/${node.field}]`;
   }
   return `${node.field}:${term}`;
 }
@@ -200,8 +188,9 @@ function buildQuery(node, options = {}) {
 
   if (node.type === 'condition') {
     const base = formatCondition(node);
+    if (!base) return '';
     if (!node.negate) return base;
-    if (currentTarget === 'jplatpat') return `NOT ${base}`;
+    if (currentTarget === 'jplatpat') return `![${base.slice(1)}`;
     return `NOT (${base})`;
   }
 
@@ -212,7 +201,11 @@ function buildQuery(node, options = {}) {
   if (!builtChildren.length) return '';
   if (builtChildren.length === 1) return builtChildren[0];
 
-  const joined = builtChildren.join(` ${node.operator} `);
+  const jplatpatOperator = node.operator === 'OR' ? '+' : '*';
+  const joined = currentTarget === 'jplatpat'
+    ? builtChildren.join(jplatpatOperator)
+    : builtChildren.join(` ${node.operator} `);
+
   if (currentTarget === 'jplatpat' && isRoot) {
     return joined;
   }
