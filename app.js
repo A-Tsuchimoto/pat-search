@@ -187,17 +187,28 @@ function formatCondition(node) {
   return `${node.field}:${term}`;
 }
 
-function buildQuery(node) {
+function buildQuery(node, options = {}) {
+  const { isRoot = true } = options;
+
   if (node.type === 'condition') {
     const base = formatCondition(node);
-    return node.negate ? `NOT (${base})` : base;
+    if (!node.negate) return base;
+    if (currentTarget === 'jplatpat') return `NOT ${base}`;
+    return `NOT (${base})`;
   }
 
   if (!node.children.length) return '';
-  const builtChildren = node.children.map((child) => buildQuery(child)).filter(Boolean);
+  const builtChildren = node.children
+    .map((child) => buildQuery(child, { isRoot: false }))
+    .filter(Boolean);
   if (!builtChildren.length) return '';
   if (builtChildren.length === 1) return builtChildren[0];
-  return `(${builtChildren.join(` ${node.operator} `)})`;
+
+  const joined = builtChildren.join(` ${node.operator} `);
+  if (currentTarget === 'jplatpat' && isRoot) {
+    return joined;
+  }
+  return `(${joined})`;
 }
 
 function flattenTree(node, parentId = '') {
