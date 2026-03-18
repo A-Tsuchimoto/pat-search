@@ -252,9 +252,14 @@ function removeNode(nodeId) {
   render();
 }
 
+function isQuotedPhrase(keyword) {
+  return /^"(?:[^"\\]|\\.)+"(?:~\d+)?$/.test(keyword);
+}
+
 function isAdvancedExpression(keyword) {
   const trimmed = keyword.trim();
   if (!trimmed) return false;
+  if (isQuotedPhrase(trimmed)) return true;
   return /\(|\)|\[|\]|\bAND\b|\bOR\b|\bNOT\b|\+|\*|\-|~|\bTO\b|:|,\d{1,2}[CN],/i.test(trimmed);
 }
 
