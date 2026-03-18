@@ -1,0 +1,14 @@
+{
+  "name": "pat-search",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Patent search query builder for J-PlatPat and Lens.org, deployable to Cloudflare Pages.",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "preview": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^4.7.0"
+  }
+}
