@@ -62,7 +62,7 @@ const TARGET_CONFIG = {
       { value: 'full_text', label: 'Full text (full_text)' },
       { value: 'applicant.name', label: 'Applicant (applicant.name)' },
       { value: 'inventor.name', label: 'Inventor (inventor.name)' },
-      { value: 'ipc.symbol', label: 'IPC (ipc.symbol)' },
+      { value: 'class_ipcr.symbol', label: 'IPC (ipc.symbol)' },
       { value: 'publication_date', label: 'Publication date (publication_date)' },
     ],
     keywordPlaceholder: 'e.g. battery, "solid electrolyte", "battery cooling"~5',
