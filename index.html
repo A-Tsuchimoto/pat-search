@@ -3,24 +3,62 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="特許検索式をGUIで組み立てて、J-PlatPatとLens.org向けの検索式へ変換できる静的Webアプリ。Cloudflare Pagesで配信可能。"
+    />
     <title>特許検索式ビルダー</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header>
-      <h1>特許検索式ビルダー</h1>
-      <p>GUIで論理式を組み立て、J-PlatPat / Lens.org 向けの検索式へ変換。CSV入出力にも対応。</p>
+    <header class="site-header">
+      <div class="header-inner">
+        <p class="eyebrow">Cloudflare Pages対応 / モバイル最適化</p>
+        <h1>特許検索式ビルダー</h1>
+        <p class="lead">GUIで論理式を組み立て、J-PlatPat / Lens.org 向けの検索式へ変換。CSV入出力にも対応した、ブラウザだけで動く静的Webアプリです。</p>
+        <div class="header-badges" aria-label="アプリ特長">
+          <span class="badge">静的配信</span>
+          <span class="badge">オフライン利用可</span>
+          <span class="badge">スマホ表示対応</span>
+        </div>
+      </div>
     </header>
 
     <main>
+      <section class="panel intro-panel">
+        <div>
+          <h2>すぐ使えるポイント</h2>
+          <p class="hint">Cloudflare Pagesへそのまま配置できる構成です。スマホでは操作ボタンを縦並びに切り替え、入力欄も読みやすい余白で表示します。</p>
+        </div>
+        <div class="intro-metrics">
+          <article>
+            <strong>2</strong>
+            <span>出力先DB</span>
+          </article>
+          <article>
+            <strong>CSV</strong>
+            <span>入出力対応</span>
+          </article>
+          <article>
+            <strong>100%</strong>
+            <span>静的配信</span>
+          </article>
+        </div>
+      </section>
+
       <section class="panel controls-panel">
-        <h2>出力先データベース</h2>
-        <div class="db-toggle" role="group" aria-label="出力先切り替え">
-          <button id="target-jplatpat" class="target-button active" data-target="jplatpat" type="button">J-PlatPat</button>
-          <button id="target-lens" class="target-button" data-target="lens" type="button">Lens.org</button>
+        <div class="section-heading">
+          <div>
+            <h2>出力先データベース</h2>
+            <p class="hint">切り替えると、入力候補・ガイド・検索式出力が対象DB向けに自動で更新されます。</p>
+          </div>
+          <div class="db-toggle" role="group" aria-label="出力先切り替え">
+            <button id="target-jplatpat" class="target-button active" data-target="jplatpat" type="button">J-PlatPat</button>
+            <button id="target-lens" class="target-button" data-target="lens" type="button">Lens.org</button>
+          </div>
         </div>
 
-        <div class="action-row">
+        <div class="action-row action-row-primary">
           <button id="load-sample" type="button">推奨サンプルを読み込む</button>
           <button id="add-condition" type="button">条件を追加</button>
           <button id="add-group" type="button">グループを追加</button>
@@ -28,38 +66,47 @@
         </div>
       </section>
 
-      <section class="panel">
-        <h2 id="guide-title">検索設計ガイド</h2>
-        <ul id="guide-list" class="guide-list"></ul>
-      </section>
+      <div class="content-grid">
+        <section class="panel compact-panel">
+          <h2 id="guide-title">検索設計ガイド</h2>
+          <ul id="guide-list" class="guide-list"></ul>
+        </section>
 
-      <section class="panel">
-        <h2>検索式GUI</h2>
-        <p class="hint">ルートグループの演算子を切り替え、条件や子グループを追加してください。</p>
-        <div id="builder-root"></div>
-      </section>
+        <section class="panel builder-panel">
+          <h2>検索式GUI</h2>
+          <p class="hint">ルートグループの演算子を切り替え、条件や子グループを追加してください。</p>
+          <div id="builder-root"></div>
+        </section>
+      </div>
 
-      <section class="panel">
-        <h2>変換結果</h2>
-        <label for="query-output">現在の出力先向け論理検索式</label>
-        <textarea id="query-output" readonly rows="6"></textarea>
-        <div class="action-row">
-          <button id="copy-output" type="button">検索式をコピー</button>
-          <span id="copy-status" aria-live="polite"></span>
-        </div>
-      </section>
+      <div class="content-grid bottom-grid">
+        <section class="panel output-panel">
+          <div class="section-heading">
+            <div>
+              <h2>変換結果</h2>
+              <p class="hint">現在選択中の出力先に合わせた検索式を、リアルタイムで生成します。</p>
+            </div>
+          </div>
+          <label for="query-output">現在の出力先向け論理検索式</label>
+          <textarea id="query-output" readonly rows="6"></textarea>
+          <div class="action-row">
+            <button id="copy-output" type="button">検索式をコピー</button>
+            <span id="copy-status" aria-live="polite"></span>
+          </div>
+        </section>
 
-      <section class="panel">
-        <h2>CSV入出力</h2>
-        <p class="hint">CSV列: id,parent_id,type,operator,field,keyword,negate</p>
-        <div class="action-row">
-          <button id="export-csv" type="button">CSVを書き出し</button>
-          <label class="file-upload">CSVを読み込み
-            <input id="import-csv" type="file" accept=".csv,text/csv" />
-          </label>
-        </div>
-        <textarea id="csv-preview" rows="8" readonly></textarea>
-      </section>
+        <section class="panel csv-panel">
+          <h2>CSV入出力</h2>
+          <p class="hint">CSV列: id,parent_id,type,operator,field,keyword,negate</p>
+          <div class="action-row">
+            <button id="export-csv" type="button">CSVを書き出し</button>
+            <label class="file-upload">CSVを読み込み
+              <input id="import-csv" type="file" accept=".csv,text/csv" />
+            </label>
+          </div>
+          <textarea id="csv-preview" rows="8" readonly></textarea>
+        </section>
+      </div>
     </main>
 
     <template id="condition-template">
