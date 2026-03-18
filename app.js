@@ -62,16 +62,16 @@ const TARGET_CONFIG = {
       { value: 'full_text', label: 'Full text (full_text)' },
       { value: 'applicant.name', label: 'Applicant (applicant.name)' },
       { value: 'inventor.name', label: 'Inventor (inventor.name)' },
-      { value: 'class_ipcr.symbol', label: 'IPC (ipc.symbol)' },
+      { value: 'ipc.symbol', label: 'IPC (ipc.symbol)' },
       { value: 'publication_date', label: 'Publication date (publication_date)' },
     ],
     keywordPlaceholder: 'e.g. battery, "solid electrolyte", "battery cooling"~5',
     negateLabel: '除外（NOT）',
     guide: [
       '演算子は AND / OR / NOT（大文字）を使用。スペース区切りは既定で AND。',
-      'OR にしたいときは明示的に OR を書き、field:value 形式では title:(A OR B) のように束ねる。',
+      '同一入力欄では、アプリ記法 / J-PlatPat記法の「+」と、Lens記法の「OR」を独立してORとして認識する。',
       'フレーズは "..."、近接は "語1 語2"~k（単語ベース）、範囲は [a TO b]。',
-      '分類サンプルは IPC を採用し、ipc.symbol:H01M のように記述する。',
+      '分類サンプルは IPC を採用し、ipc.symbol:"H01M" のように二重引用符で記述する。',
     ],
     sample: {
       operator: 'AND',
@@ -255,35 +255,123 @@ function isQuotedPhrase(keyword) {
   return /^"(?:[^"\\]|\\.)+"(?:~\d+)?$/.test(keyword);
 }
 
+function splitTopLevelOrTerms(keyword) {
+  const trimmed = keyword.trim();
+  if (!trimmed) return [];
+
+  const terms = [];
+  let current = '';
+  let roundDepth = 0;
+  let squareDepth = 0;
+  let inQuotes = false;
+
+  const pushCurrent = () => {
+    const value = current.trim();
+    if (value) terms.push(value);
+    current = '';
+  };
+
+  for (let i = 0; i < trimmed.length; i += 1) {
+    const ch = trimmed[i];
+    const nextFour = trimmed.slice(i, i + 4);
+    const prev = i > 0 ? trimmed[i - 1] : '';
+
+    if (ch === '"' && prev !== '\\') {
+      inQuotes = !inQuotes;
+      current += ch;
+      continue;
+    }
+
+    if (!inQuotes) {
+      if (ch === '(') {
+        roundDepth += 1;
+      } else if (ch === ')') {
+        roundDepth = Math.max(0, roundDepth - 1);
+      } else if (ch === '[') {
+        squareDepth += 1;
+      } else if (ch === ']') {
+        squareDepth = Math.max(0, squareDepth - 1);
+      }
+
+      const atTopLevel = roundDepth === 0 && squareDepth === 0;
+      if (ch === '+' && atTopLevel) {
+        pushCurrent();
+        continue;
+      }
+      if (nextFour.toUpperCase() === ' OR ' && atTopLevel) {
+        pushCurrent();
+        i += 3;
+        continue;
+      }
+    }
+
+    current += ch;
+  }
+
+  pushCurrent();
+  return terms.length > 1 ? terms : [trimmed];
+}
+
 function isAdvancedExpression(keyword) {
   const trimmed = keyword.trim();
   if (!trimmed) return false;
   if (isQuotedPhrase(trimmed)) return true;
-  return /\(|\)|\[|\]|\bAND\b|\bOR\b|\bNOT\b|\+|\*|\-|~|\bTO\b|:|,\d{1,2}[CN],/i.test(trimmed);
+  return /\(|\)|\[|\]|\bAND\b|\bNOT\b|\*|\-|~|\bTO\b|:|,\d{1,2}[CN],/i.test(trimmed);
 }
 
-function quoteTerm(keyword) {
+function shouldQuoteLensTerm(field, keyword) {
+  const trimmed = keyword.trim();
+  if (!trimmed) return false;
+  if (field === 'ipc.symbol' || field === 'class_ipcr.symbol') return true;
+  return /\s/.test(trimmed);
+}
+
+function quoteTerm(keyword, field = '') {
   const trimmed = keyword.trim();
   if (!trimmed) return '';
   if (isAdvancedExpression(trimmed)) return trimmed;
+  if (currentTarget === 'lens' && shouldQuoteLensTerm(field, trimmed)) {
+    return `"${trimmed.replaceAll('"', '""')}"`;
+  }
   if (/\s/.test(trimmed)) return `"${trimmed.replaceAll('"', '""')}"`;
   return trimmed;
 }
 
-function formatCondition(node) {
-  const term = quoteTerm(node.keyword);
+function formatJplatpatAlternative(field, rawTerm) {
+  const term = quoteTerm(rawTerm, field);
   if (!term) return '';
-
-  if (currentTarget === 'jplatpat') {
-    if (node.field === 'AB_CL_TL') {
-      return [`${term}/AB`, `${term}/CL`, `${term}/TL`].join('+');
-    }
-    return `[${term}/${node.field}]`;
+  if (field === 'AB_CL_TL') {
+    return [`[${term}/AB]`, `[${term}/CL]`, `[${term}/TL]`].join('+');
   }
-  if (node.field === 'title_abstract_claim') {
+  return `[${term}/${field}]`;
+}
+
+function formatLensAlternative(field, rawTerm) {
+  const normalizedField = field === 'class_ipcr.symbol' ? 'ipc.symbol' : field;
+  const term = quoteTerm(rawTerm, normalizedField);
+  if (!term) return '';
+  if (normalizedField === 'title_abstract_claim') {
     return `(title:${term} OR abstract:${term} OR claim:${term})`;
   }
-  return `${node.field}:${term}`;
+  return `${normalizedField}:${term}`;
+}
+
+function formatCondition(node) {
+  const alternatives = splitTopLevelOrTerms(node.keyword);
+  if (!alternatives.length) return '';
+
+  const formatted = (currentTarget === 'jplatpat'
+    ? alternatives.map((term) => formatJplatpatAlternative(node.field, term))
+    : alternatives.map((term) => formatLensAlternative(node.field, term)))
+    .filter(Boolean);
+
+  if (!formatted.length) return '';
+  if (formatted.length === 1) return formatted[0];
+
+  if (currentTarget === 'jplatpat') {
+    return `[${formatted.join('+')}]`;
+  }
+  return `(${formatted.join(' OR ')})`;
 }
 
 function buildQuery(node, options = {}) {
