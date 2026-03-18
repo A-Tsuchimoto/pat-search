@@ -8,7 +8,7 @@
 - 検索式をリアルタイム表示
 - 入力欄ではアプリ記法（`A+B`）/ J-PlatPat記法（`A+B`）/ Lens記法（`A OR B`）のOR表現を独立認識
 - J-PlatPat向けに `[キーワード/項目コード]` 形式で出力
-- Lens向けIPCは `ipc.symbol:"H01M"` のように常に二重引用符付きで出力
+- Lens向けIPCは `class_ipcr.symbol:"H01M"` のように常に二重引用符付きで出力
 - 検索式ツリーをCSV出力
 - CSVを再入力して検索式を復元
 

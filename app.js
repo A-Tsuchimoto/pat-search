@@ -62,7 +62,7 @@ const TARGET_CONFIG = {
       { value: 'full_text', label: 'Full text (full_text)' },
       { value: 'applicant.name', label: 'Applicant (applicant.name)' },
       { value: 'inventor.name', label: 'Inventor (inventor.name)' },
-      { value: 'class_ipcr.symbol', label: 'IPC (ipc.symbol)' },
+      { value: 'class_ipcr.symbol', label: 'IPC (class_ipcr.symbol)' },
       { value: 'publication_date', label: 'Publication date (publication_date)' },
     ],
     keywordPlaceholder: 'e.g. battery, "solid electrolyte", "battery cooling"~5',
@@ -71,7 +71,7 @@ const TARGET_CONFIG = {
       '演算子は AND / OR / NOT（大文字）を使用。スペース区切りは既定で AND。',
       '同一入力欄では、アプリ記法 / J-PlatPat記法の「+」と、Lens記法の「OR」を独立してORとして認識する。',
       'フレーズは "..."、近接は "語1 語2"~k（単語ベース）、範囲は [a TO b]。',
-      '分類サンプルは IPC を採用し、ipc.symbol:"H01M" のように二重引用符で記述する。',
+      '分類サンプルは IPC を採用し、class_ipcr.symbol:"H01M" のように二重引用符で記述する。',
     ],
     sample: {
       operator: 'AND',
@@ -92,7 +92,7 @@ const TARGET_CONFIG = {
             { type: 'condition', field: 'title_abstract_claim', keyword: '"thermal management"', negate: false },
           ],
         },
-        { type: 'condition', field: 'ipc.symbol', keyword: 'H01M', negate: false },
+        { type: 'condition', field: 'class_ipcr.symbol', keyword: 'H01M', negate: false },
       ],
     },
   },
@@ -322,7 +322,7 @@ function isAdvancedExpression(keyword) {
 function shouldQuoteLensTerm(field, keyword) {
   const trimmed = keyword.trim();
   if (!trimmed) return false;
-  if (field === 'ipc.symbol' || field === 'class_ipcr.symbol') return true;
+  if (field === 'class_ipcr.symbol') return true;
   return /\s/.test(trimmed);
 }
 
@@ -347,13 +347,12 @@ function formatJplatpatAlternative(field, rawTerm) {
 }
 
 function formatLensAlternative(field, rawTerm) {
-  const normalizedField = field === 'class_ipcr.symbol' ? 'ipc.symbol' : field;
-  const term = quoteTerm(rawTerm, normalizedField);
+  const term = quoteTerm(rawTerm, field);
   if (!term) return '';
-  if (normalizedField === 'title_abstract_claim') {
+  if (field === 'title_abstract_claim') {
     return `(title:${term} OR abstract:${term} OR claim:${term})`;
   }
-  return `${normalizedField}:${term}`;
+  return `${field}:${term}`;
 }
 
 function formatCondition(node) {

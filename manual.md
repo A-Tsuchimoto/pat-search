@@ -778,17 +778,17 @@ Lens では `~` が使えます。J-PlatPat の `3N` や `5C` のような専用
 
 ## 8. IPC の記入フォーマット
 
-Lens で IPC を使う場合は、通常 **`ipc.symbol:` フィールドに分類記号を入れる**形で書きます。
+Lens で IPC を使う場合は、通常 **`class_ipcr.symbol:` フィールドに分類記号を入れる**形で書きます。
 
 例:
 
-- `ipc.symbol:H01M`
-- `ipc.symbol:"H01M 10/0525"`
-- `ipc.symbol:(H01M OR H02J)`
+- `class_ipcr.symbol:H01M`
+- `class_ipcr.symbol:"H01M 10/0525"`
+- `class_ipcr.symbol:(H01M OR H02J)`
 
 実務上のポイント:
 
-- Lens では CPC と IPC が別フィールドなので、IPC を使うときは `cpc.symbol:` ではなく `ipc.symbol:` を選ぶ
+- Lens では CPC と IPC が別フィールドなので、IPC を使うときは `cpc.symbol:` ではなく `class_ipcr.symbol:` を選ぶ
 - スラッシュや空白を含む記号は、必要に応じて引用符で囲うと安全
 - 分類記号単独でも使えるが、通常はテキスト条件と `AND` で掛け合わせて母集団を安定させる
 
@@ -944,7 +944,7 @@ Lens では、検索可能テキストは正規化され、英語の stop words 
 
 `(title:(battery OR accumulator) OR abstract:(battery OR accumulator) OR claim:(battery OR accumulator)) AND date_published:[2020-01-01 TO 2024-12-31]`
 
-分類フィールドは実際に利用可能な field 名に合わせて置き換える。IPC を使うなら、たとえば `ipc.symbol:(H01M OR H02J)` のように書く。
+分類フィールドは実際に利用可能な field 名に合わせて置き換える。IPC を使うなら、たとえば `class_ipcr.symbol:(H01M OR H02J)` のように書く。
 
 ---
 
@@ -1183,7 +1183,7 @@ A群、B群、C群を別に作る。
 
 ## 7. Lens 例: 近接中心
 
-`("battery cooling"~5 OR "thermal management"~5) AND applicant.name:"Panasonic" AND ipc.symbol:(H01M OR H02J)`
+`("battery cooling"~5 OR "thermal management"~5) AND applicant.name:"Panasonic" AND class_ipcr.symbol:(H01M OR H02J)`
 
 ---
 
