@@ -55,6 +55,7 @@ const TARGET_CONFIG = {
   lens: {
     name: 'Lens.org',
     fields: [
+      { value: 'title_abstract_claim', label: 'Summary+Claim+Title (abstract+claim+title)' },
       { value: 'title', label: 'Title (title)' },
       { value: 'abstract', label: 'Abstract (abstract)' },
       { value: 'claim', label: 'Claim (claim)' },
@@ -65,11 +66,11 @@ const TARGET_CONFIG = {
       { value: 'ipc.symbol', label: 'IPC (ipc.symbol)' },
       { value: 'publication_date', label: 'Publication date (publication_date)' },
     ],
-    keywordPlaceholder: '例: "solid electrolyte" OR battery~2',
+    keywordPlaceholder: 'e.g. battery, "solid electrolyte", "battery cooling"~5',
     negateLabel: '除外（NOT）',
     guide: [
       '演算子は AND / OR / NOT（大文字）を使用。',
-      'field:value 形式で記述し、グルーピングは ( )。',
+      'field:value 形式で記述し、title/abstract/claim を束ねるときは (title:... OR abstract:... OR claim:...) のように書く。',
       'フレーズは "..."、近接は "語1 語2"~k、範囲は [a TO b]。',
       '既定ANDなので、複雑式は必ず括弧で意図を明示する。',
     ],
@@ -80,16 +81,16 @@ const TARGET_CONFIG = {
           type: 'group',
           operator: 'OR',
           children: [
-            { type: 'condition', field: 'title', keyword: 'battery', negate: false },
-            { type: 'condition', field: 'abstract', keyword: '"solid electrolyte"', negate: false },
+            { type: 'condition', field: 'title_abstract_claim', keyword: 'battery', negate: false },
+            { type: 'condition', field: 'title_abstract_claim', keyword: 'accumulator', negate: false },
           ],
         },
         {
           type: 'group',
           operator: 'OR',
           children: [
-            { type: 'condition', field: 'claim', keyword: 'cooling', negate: false },
-            { type: 'condition', field: 'claim', keyword: 'heat dissipation', negate: false },
+            { type: 'condition', field: 'title_abstract_claim', keyword: 'cooling', negate: false },
+            { type: 'condition', field: 'title_abstract_claim', keyword: '"thermal management"', negate: false },
           ],
         },
         { type: 'condition', field: 'cpc.symbol', keyword: 'H01M*', negate: false },
@@ -274,6 +275,9 @@ function formatCondition(node) {
       return [`${term}/AB`, `${term}/CL`, `${term}/TL`].join('+');
     }
     return `[${term}/${node.field}]`;
+  }
+  if (node.field === 'title_abstract_claim') {
+    return `(title:${term} OR abstract:${term} OR claim:${term})`;
   }
   return `${node.field}:${term}`;
 }
