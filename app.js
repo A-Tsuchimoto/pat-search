@@ -3,8 +3,8 @@ const TARGET_CONFIG = {
     name: 'J-PlatPat',
     fields: [
       { value: 'TX', label: '全文 (TX)' },
-      { value: 'TL', label: '発明の名称 (TL)' },
-      { value: 'AB_CL_TL', label: '要約+請求項+発明の名称 (AB+CL+TL)' },
+      { value: 'TI', label: '発明の名称 (TI)' },
+      { value: 'AB_CL_TI', label: '要約+請求項+発明の名称 (AB+CL+TI)' },
       { value: 'AB', label: '要約・抄録 (AB)' },
       { value: 'CL', label: '請求の範囲 (CL)' },
       { value: 'FI', label: 'FI分類 (FI)' },
@@ -19,7 +19,7 @@ const TARGET_CONFIG = {
       '演算子は *（AND） / +（OR） / -（NOT）を使用。',
       'グルーピングは [ ] を意識し、観点ごとに分ける。',
       '同義語は [A+B+C]、技術観点同士は * で連結。',
-      '広く拾うならTX、精密化はAB/CL/TL/FI/FT/IPを併用。',
+      '広く拾うならTX、精密化はAB/CL/TI/FI/FT/IPを併用。',
     ],
     sample: {
       operator: 'AND',
@@ -340,8 +340,8 @@ function quoteTerm(keyword, field = '') {
 function formatJplatpatAlternative(field, rawTerm) {
   const term = quoteTerm(rawTerm, field);
   if (!term) return '';
-  if (field === 'AB_CL_TL') {
-    return [`[${term}/AB]`, `[${term}/CL]`, `[${term}/TL]`].join('+');
+  if (field === 'AB_CL_TI') {
+    return [`[${term}/AB]`, `[${term}/CL]`, `[${term}/TI]`].join('+');
   }
   return `[${term}/${field}]`;
 }
